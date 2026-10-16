@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ContaMind · Fotos de facturas</title>
+<meta name="description" content="Tome fotos de las facturas con el teléfono y léalas en ContaMind PRO.">
+<meta name="theme-color" content="#14213D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ContaMind">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<style>
+  :root {
+    --papel: #F6F7F9; --superficie: #FFFFFF; --linea: #D8DEE6; --tinta: #14213D; --tinta-2: #44516A; --tenue: #5C6880;
+    --sello: #0F766E; --sello-hondo: #0B5E58; --sello-suave: #E2F2EF; --ambar: #B45309; --ambar-suave: #FEF4E6;
+    --rojo: #B42318; --rojo-suave: #FDEDEB; --azul: #1D4ED8; --azul-suave: #EAF0FE; --radio: 14px;
+    --letra: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --papel: #0E1626; --superficie: #16223A; --linea: #2A3A5C; --tinta: #E8EDF5; --tinta-2: #BAC6D9; --tenue: #9AA8C0;
+            --sello: #2BB3A6; --sello-hondo: #5FD0C4; --sello-suave: #123A3A; --ambar: #F5A524; --ambar-suave: #3A2A10;
+            --rojo: #F97066; --rojo-suave: #3D1A1A; --azul: #7AA2FF; --azul-suave: #1B2A4D; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.5 var(--letra); }
+  body { min-height: 100vh; padding: env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom)); }
+  header { display: flex; align-items: center; gap: 10px; padding: 14px 0 10px; }
+  header img { width: 36px; height: 36px; border-radius: 9px; }
+  header h1 { font-size: 20px; margin: 0; flex: 1; }
+  main { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+  .tarjeta { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio); padding: 18px; }
+  h2 { font-size: 18px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; color: var(--tinta-2); }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  input[type=email], input[type=password], select {
+    width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; color: var(--tinta); background: var(--superficie);
+    border: 1px solid var(--linea); border-radius: 10px; }
+  input:focus-visible, select:focus-visible, button:focus-visible, .boton:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
+  button, .boton { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px;
+    padding: 12px 16px; font: 600 17px var(--letra); border-radius: 12px; border: 1px solid var(--linea); cursor: pointer;
+    background: var(--superficie); color: var(--tinta); transition: transform .08s ease, opacity .15s ease; }
+  button:active, .boton:active { transform: scale(.98); }
+  button[disabled] { opacity: .55; cursor: default; }
+  .primario { background: var(--sello); border-color: var(--sello); color: #fff; }
+  @media (prefers-color-scheme: dark) { .primario { color: #062320; } }
+  .grande { min-height: 120px; font-size: 20px; flex-direction: column; gap: 6px; }
+  .grande svg { width: 40px; height: 40px; }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .chico { min-height: 40px; width: auto; padding: 6px 12px; font-size: 15px; }
+  .enlace { background: none; border: none; color: var(--azul); width: auto; min-height: 40px; padding: 4px; font-weight: 600; }
+  .aviso { border-radius: 10px; padding: 10px 12px; margin-top: 10px; font-size: 15px; }
+  .aviso.error { background: var(--rojo-suave); color: var(--rojo); }
+  .aviso.info { background: var(--azul-suave); color: var(--azul); }
+  .aviso.ambar { background: var(--ambar-suave); color: var(--ambar); }
+  .oculto { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  ul.cola { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  ul.cola li { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--linea); border-radius: 10px; }
+  ul.cola img, ul.cola .pdf { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--papel);
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--tenue); }
+  ul.cola .txt { flex: 1; min-width: 0; font-size: 15px; }
+  ul.cola .estado { font-size: 14px; font-weight: 600; }
+  .subida { color: var(--sello-hondo); } .fallo { color: var(--rojo); } .subiendo { color: var(--azul); }
+  .contador { font-size: 15px; color: var(--tenue); text-align: center; }
+  .girando { width: 18px; height: 18px; border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: g .8s linear infinite; }
+  @keyframes g { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .girando { animation: none; } button { transition: none; } }
+  .recibida { color: var(--sello-hondo); }
+  .codigo { font: 700 24px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
+  .pie-tel { font-size: 14px; color: var(--tenue); text-align: center; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header><img src="icono-192.png" alt=""><h1>ContaMind</h1><button class="enlace oculto" id="salir" type="button">Desconectar</button></header>
+<main>
+  <section class="tarjeta" id="v-cargando" aria-live="polite"><p>Cargando…</p></section>
+
+  <!-- Autorizar este teléfono con la invitación de la computadora -->
+  <section class="tarjeta oculto" id="v-entrar">
+    <h2>Autorice este teléfono</h2>
+    <p>En ContaMind (computadora): <b>Desde el teléfono → Invitar un teléfono</b>. Escanee el código QR con la cámara o escriba aquí el código de 8 letras.</p>
+    <form id="f-entrar" novalidate>
+      <label for="codigo">Código de invitación</label>
+      <input class="codigo" id="codigo" maxlength="9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345">
+      <label for="nombre-tel">Nombre de este teléfono</label>
+      <input id="nombre-tel" maxlength="60" placeholder="Ej.: Teléfono de Ana" autocomplete="off">
+      <div id="e-entrar" class="aviso error oculto" role="alert"></div>
+      <button class="primario" type="submit" id="b-entrar" style="margin-top:16px">Autorizar</button>
+    </form>
+    <p class="contador" style="margin-top:12px">Este teléfono solo podrá <b>subir fotos de facturas</b>. No ve facturas, montos ni reportes.</p>
+  </section>
+
+  <!-- Tomar fotos -->
+  <section class="tarjeta oculto" id="v-fotos">
+    <label for="cliente" style="margin-top:0">¿De qué cliente son las facturas?</label>
+    <select id="cliente"></select>
+    <p class="contador" id="sin-clientes" hidden>Todavía no hay clientes: abra ContaMind en la computadora con internet y toque «Actualizar».</p>
+    <button class="enlace" id="actualizar" type="button" style="margin:2px auto 0">Actualizar la lista</button>
+    <div class="fila" style="grid-template-columns:1fr">
+      <label class="boton primario grande" for="camara" style="margin:4px 0 0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        Tomar foto
+      </label>
+      <input class="sr" type="file" id="camara" accept="image/*" capture="environment">
+    </div>
+    <div class="fila" style="grid-template-columns:1fr">
+      <label class="boton" for="galeria" style="margin:0">Elegir fotos o PDF del teléfono</label>
+      <input class="sr" type="file" id="galeria" accept="image/*,application/pdf" multiple>
+    </div>
+    <p class="contador" style="margin-top:10px">Ponga la factura sobre una mesa, con buena luz y que se vea completa.</p>
+    <p class="pie-tel" id="pie-tel"></p>
+  </section>
+
+  <!-- Aviso de foto mala -->
+  <section class="tarjeta oculto" id="v-mala" role="alertdialog" aria-labelledby="t-mala">
+    <h2 id="t-mala">La foto salió borrosa</h2>
+    <img id="img-mala" alt="Vista de la foto" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:var(--papel)">
+    <p id="txt-mala" style="margin-top:10px"></p>
+    <div class="fila">
+      <button type="button" id="mala-subir">Subir igual</button>
+      <label class="boton primario" for="camara" id="mala-otra" style="margin:0">Tomar otra</label>
+    </div>
+  </section>
+
+  <section class="tarjeta oculto" id="v-cola" aria-live="polite">
+    <h2 id="t-cola">Fotos</h2>
+    <ul class="cola" id="cola"></ul>
+    <button class="chico oculto" id="reintentar" type="button" style="margin-top:10px">Reintentar las que fallaron</button>
+    <p class="contador" style="margin:10px 0 0">«✓ Recibida en la oficina» aparece cuando la computadora la bajó para revisarla.</p>
+  </section>
+
+  <section class="tarjeta oculto" id="v-instalar">
+    <h2>Téngala como una app</h2>
+    <p id="instalar-texto">En el menú del navegador toque «Agregar a pantalla de inicio».</p>
+    <button class="chico oculto" id="b-instalar" type="button">Instalar</button>
+  </section>
+</main>
+
+<script>
+"use strict";
+// v2.19 — El teléfono NO entra con la cuenta del dueño: se autoriza con una invitación de un solo uso y
+// recibe un token propio que SOLO sirve para subir fotos (función «telefono» en Supabase).
+const FUNCION = "https://qmxtxzihtyrqrhoxpmqk.supabase.co/functions/v1/telefono";
+const LLAVE = "sb_publishable_Sfx-VB318SUJfQJ9DZRAog_mtUf_QZl";
+const LADO_MAXIMO = 2400;          // px: suficiente para leer el texto de la factura y sube rápido con datos
+const CALIDAD = 0.85;
+const MAX_BYTES = 15 * 1024 * 1024;
+const NITIDEZ_MINIMA = 45;         // varianza del laplaciano en la miniatura: menos = borrosa  [PRELIMINAR: ajustar con fotos reales]
+const LUZ_MINIMA = 70;             // brillo promedio 0–255: menos = oscura
+
+const $ = (s) => document.querySelector(s);
+const VISTAS = ["v-cargando", "v-entrar", "v-fotos", "v-cola", "v-mala"];
+const ver = (ids) => VISTAS.forEach((v) => $("#" + v).classList.toggle("oculto", !ids.includes(v)));
+const guardar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+const leer = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const limpio = (t) => String(t ?? "").replace(/[<>&"]/g, "");
+let tel = leer("cm_telefono");     // {token, nombre}
+
+async function llamar(cuerpo) {
+  let r;
+  try {
+    r = await fetch(FUNCION, { method: "POST", headers: { "Content-Type": "application/json", apikey: LLAVE, Authorization: "Bearer " + LLAVE },
+                               body: JSON.stringify(cuerpo) });
+  } catch { throw new Error("Sin conexión. Revise el internet o los datos del teléfono."); }
+  let js = null; try { js = await r.json(); } catch { /* sin cuerpo */ }
+  if (r.status === 401 && cuerpo.accion !== "canjear") { desconectar(); throw new Error((js && js.error) || "Este teléfono ya no está autorizado."); }
+  if (!r.ok) throw new Error((js && js.error) || ("La nube respondió con un error (" + r.status + ")."));
+  return js;
+}
+
+function desconectar() { tel = null; guardar("cm_telefono", null); $("#salir").classList.add("oculto"); ver(["v-entrar"]); }
+
+// ---------- autorizar con la invitación ----------
+$("#f-entrar").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const codigo = $("#codigo").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const nombre = $("#nombre-tel").value.trim();
+  const err = $("#e-entrar"), b = $("#b-entrar");
+  err.classList.add("oculto");
+  if (codigo.length !== 8) { err.textContent = "El código tiene 8 letras y números."; err.classList.remove("oculto"); return; }
+  if (!nombre) { err.textContent = "Escriba un nombre para este teléfono (así se verá en la computadora)."; err.classList.remove("oculto"); return; }
+  b.disabled = true; b.innerHTML = '<span class="girando" aria-hidden="true"></span> Autorizando…';
+  try {
+    const js = await llamar({ accion: "canjear", codigo, nombre });
+    tel = { token: js.token, nombre: js.nombre };
+    guardar("cm_telefono", tel);
+    history.replaceState(null, "", location.pathname);
+    await empezar();
+  } catch (x) { err.textContent = x.message; err.classList.remove("oculto"); }
+  finally { b.disabled = false; b.textContent = "Autorizar"; }
+});
+$("#salir").onclick = () => { if (confirm("¿Desconectar este teléfono? Para volver a usarlo necesitará otra invitación.")) desconectar(); };
+
+// ---------- clientes ----------
+async function cargarClientes() {
+  const sel = $("#cliente");
+  let lista = leer("cm_clientes") || [];
+  try { const js = await llamar({ accion: "clientes", token: tel.token }); lista = js.clientes || []; guardar("cm_clientes", lista); }
+  catch { /* sin internet: la última lista conocida */ }
+  const ultimo = leer("cm_cliente");
+  sel.innerHTML = lista.map((c) => `<option value="${limpio(c.id)}">${limpio(c.nombre)}</option>`).join("")
+    + `<option value="sin-cliente">Otro / no sé (lo elijo en la computadora)</option>`;
+  sel.value = lista.some((c) => c.id === ultimo) ? ultimo : (lista[0] ? lista[0].id : "sin-cliente");
+  $("#sin-clientes").hidden = lista.length > 0;
+}
+$("#cliente").onchange = (e) => guardar("cm_cliente", e.target.value);
+$("#actualizar").onclick = async () => { $("#actualizar").disabled = true; await cargarClientes(); $("#actualizar").disabled = false; };
+
+// ---------- calidad de la foto (antes de subir) ----------
+function revisarCalidad(img) {
+  const ancho = 360, alto = Math.max(1, Math.round(img.height * ancho / img.width));
+  const c = document.createElement("canvas"); c.width = ancho; c.height = alto;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, ancho, alto);
+  const p = ctx.getImageData(0, 0, ancho, alto).data;
+  const g = new Float32Array(ancho * alto);
+  let suma = 0;
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) { g[j] = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; suma += g[j]; }
+  const luz = suma / g.length;
+  let m = 0, m2 = 0, n = 0;
+  for (let y = 1; y < alto - 1; y++) for (let x = 1; x < ancho - 1; x++) {
+    const k = y * ancho + x;
+    const l = 4 * g[k] - g[k - 1] - g[k + 1] - g[k - ancho] - g[k + ancho];
+    m += l; m2 += l * l; n++;
+  }
+  const nitidez = n ? m2 / n - (m / n) ** 2 : 0;
+  return { luz, nitidez, oscura: luz < LUZ_MINIMA, borrosa: nitidez < NITIDEZ_MINIMA };
+}
+
+let pendienteMala = null;
+function preguntarMala(archivo, img, cal) {
+  return new Promise((ok) => {
+    pendienteMala = ok;
+    $("#t-mala").textContent = cal.oscura && cal.borrosa ? "La foto salió oscura y borrosa" : cal.oscura ? "La foto salió oscura" : "La foto salió borrosa";
+    $("#txt-mala").textContent = cal.oscura ? "Busque más luz o encienda el flash, y que la factura ocupe toda la pantalla."
+                                            : "Sostenga el teléfono quieto, acérquese un poco y toque la pantalla para enfocar.";
+    $("#img-mala").src = URL.createObjectURL(archivo);
+    ver(["v-mala"]);
+    $("#v-mala").scrollIntoView({ behavior: "smooth" });
+  });
+}
+$("#mala-subir").onclick = () => { const ok = pendienteMala; pendienteMala = null; ver(["v-fotos", "v-cola"]); if (ok) ok(true); };
+$("#mala-otra").addEventListener("click", () => { const ok = pendienteMala; pendienteMala = null; ver(["v-fotos", "v-cola"]); if (ok) ok(false); });
+
+// ---------- cola de subida (se guarda en el teléfono hasta que suba: no se pierde si se va la señal) ----------
+const cola = [];
+let bd = null;
+function abrirBd() {
+  return new Promise((ok) => {
+    try {
+      const r = indexedDB.open("contamind-fotos", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("cola", { keyPath: "id" });
+      r.onsuccess = () => { bd = r.result; ok(); };
+      r.onerror = () => ok();
+    } catch { ok(); }
+  });
+}
+function bdHacer(modo, f) {
+  return new Promise((ok) => {
+    if (!bd) return ok(null);
+    try { const tx = bd.transaction("cola", modo); const r = f(tx.objectStore("cola")); tx.oncomplete = () => ok(r && r.result); tx.onerror = () => ok(null); }
+    catch { ok(null); }
+  });
+}
+
+async function preparar(archivo, revisar) {
+  if (archivo.type === "application/pdf") return { blob: archivo, ext: "pdf", tipo: "application/pdf" };
+  let img;
+  try { img = await createImageBitmap(archivo, { imageOrientation: "from-image" }); }
+  catch { return { blob: archivo, ext: (archivo.type.split("/")[1] || "jpg").replace("jpeg", "jpg"), tipo: archivo.type || "image/jpeg" }; }
+  if (revisar) {
+    const cal = revisarCalidad(img);
+    if ((cal.oscura || cal.borrosa) && !(await preguntarMala(archivo, img, cal))) return null;
+  }
+  const escala = Math.min(1, LADO_MAXIMO / Math.max(img.width, img.height));
+  const lienzo = document.createElement("canvas");
+  lienzo.width = Math.round(img.width * escala); lienzo.height = Math.round(img.height * escala);
+  lienzo.getContext("2d").drawImage(img, 0, 0, lienzo.width, lienzo.height);
+  const blob = await new Promise((ok) => lienzo.toBlob(ok, "image/jpeg", CALIDAD));
+  return { blob: blob || archivo, ext: "jpg", tipo: "image/jpeg" };
+}
+
+async function agregar(archivos, desdeCamara) {
+  const cliente = $("#cliente").value || "sin-cliente";
+  const nombreCliente = $("#cliente").selectedOptions[0]?.textContent || "";
+  for (const a of archivos) {
+    if (a.size > 40 * 1024 * 1024) { cola.unshift({ id: String(Math.random()), estado: "fallo", error: `${a.name}: demasiado grande` }); pintar(); continue; }
+    let r;
+    try { r = await preparar(a, desdeCamara || archivos.length === 1); }
+    catch (x) { cola.unshift({ id: String(Math.random()), estado: "fallo", error: "No se pudo preparar: " + x.message }); pintar(); continue; }
+    if (!r) continue;                                   // la persona prefirió tomar otra
+    if (r.blob.size > MAX_BYTES) { cola.unshift({ id: String(Math.random()), estado: "fallo", error: "Más de 15 MB" }); pintar(); continue; }
+    const item = { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()), estado: "espera", cliente, nombreCliente,
+                   blob: r.blob, tipo: r.tipo, ext: r.ext, url: r.tipo.startsWith("image/") ? URL.createObjectURL(r.blob) : null, cuando: Date.now() };
+    cola.unshift(item);
+    await bdHacer("readwrite", (s) => s.put({ id: item.id, cliente, nombreCliente, blob: r.blob, tipo: r.tipo, ext: r.ext, cuando: item.cuando }));
+    pintar();
+  }
+  subirTodo();
+}
+
+let subiendo = false;
+async function subirTodo() {
+  if (subiendo || !tel) return;
+  subiendo = true;
+  try {
+    for (const item of [...cola].reverse()) {
+      if (item.estado !== "espera") continue;
+      item.estado = "subiendo"; pintar();
+      try {
+        const f = await llamar({ accion: "subir", token: tel.token, cliente: item.cliente, ext: item.ext });
+        let r;
+        try { r = await fetch(f.url, { method: "PUT", headers: { "Content-Type": item.tipo, "x-upsert": "false" }, body: item.blob }); }
+        catch { throw new Error("Sin conexión. Se subirá cuando vuelva la señal."); }
+        if (!r.ok) throw new Error(r.status === 413 ? "El archivo es muy grande (máximo 15 MB)." : "No se pudo subir (" + r.status + ").");
+        item.estado = "subida"; item.ruta = f.ruta; item.blob = null;
+        await bdHacer("readwrite", (s) => s.delete(item.id));
+        const enviadas = leer("cm_enviadas") || [];
+        enviadas.unshift({ ruta: f.ruta, cuando: item.cuando, cliente: item.nombreCliente });
+        guardar("cm_enviadas", enviadas.slice(0, 200));
+      } catch (x) { item.estado = "fallo"; item.error = x.message; }
+      pintar();
+    }
+  } finally { subiendo = false; }
+  revisarRecibidas();
+}
+
+// ---------- ¿ya la recibió la oficina? (la PC la bajó y la borró de la nube) ----------
+async function revisarRecibidas() {
+  if (!tel) return;
+  const enviadas = leer("cm_enviadas") || [];
+  const pendientes = enviadas.filter((e) => !e.recibida && Date.now() - e.cuando < 30 * 86400000);
+  if (!pendientes.length) return;
+  try {
+    const js = await llamar({ accion: "estado", token: tel.token, rutas: pendientes.map((e) => e.ruta) });
+    const listas = new Set(js.recibidas || []);
+    enviadas.forEach((e) => { if (listas.has(e.ruta)) e.recibida = true; });
+    guardar("cm_enviadas", enviadas);
+    cola.forEach((c) => { if (c.ruta && listas.has(c.ruta)) c.estado = "recibida"; });
+    pintar();
+  } catch { /* se intenta luego */ }
+}
+
+function hora(ms) { const d = new Date(ms); return d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" }); }
+
+function pintar() {
+  const enviadas = leer("cm_enviadas") || [];
+  const hoy = new Date().toDateString();
+  const deHoy = enviadas.filter((e) => new Date(e.cuando).toDateString() === hoy);
+  const recibidasHoy = deHoy.filter((e) => e.recibida).length;
+  const hay = cola.length || deHoy.length;
+  $("#v-cola").classList.toggle("oculto", !hay);
+  $("#t-cola").textContent = `Hoy: ${deHoy.length} subida${deHoy.length === 1 ? "" : "s"}${deHoy.length ? ` · ${recibidasHoy} recibida${recibidasHoy === 1 ? "" : "s"} en la oficina` : ""}`;
+  const txt = { espera: "En espera", subiendo: "Subiendo…", subida: "✓ Subida · esperando a la oficina", recibida: "✓ Recibida en la oficina", fallo: "No se subió" };
+  const clase = { subida: "subida", recibida: "recibida", fallo: "fallo" };
+  const filas = cola.slice(0, 40).map((c) => `<li>${c.url ? `<img src="${c.url}" alt="">` : `<span class="pdf">${c.tipo === "application/pdf" ? "PDF" : "…"}</span>`}
+    <span class="txt"><span class="estado ${clase[c.estado] || "subiendo"}">${txt[c.estado] || ""}</span><br>
+    <span style="color:var(--tenue)">${limpio(c.nombreCliente)}${c.cuando ? " · " + hora(c.cuando) : ""}${c.error ? " · " + limpio(c.error) : ""}</span></span></li>`);
+  // las de hoy que ya no están en la cola (por ejemplo, después de cerrar la app)
+  const enCola = new Set(cola.map((c) => c.ruta).filter(Boolean));
+  deHoy.filter((e) => !enCola.has(e.ruta)).slice(0, 40).forEach((e) => filas.push(`<li><span class="pdf">✓</span><span class="txt">
+    <span class="estado ${e.recibida ? "recibida" : "subida"}">${e.recibida ? "✓ Recibida en la oficina" : "✓ Subida · esperando a la oficina"}</span><br>
+    <span style="color:var(--tenue)">${limpio(e.cliente)} · ${hora(e.cuando)}</span></span></li>`));
+  $("#cola").innerHTML = filas.join("");
+  $("#reintentar").classList.toggle("oculto", !cola.some((c) => c.estado === "fallo" && c.blob));
+}
+
+$("#reintentar").onclick = () => { cola.forEach((c) => { if (c.estado === "fallo" && c.blob) { c.estado = "espera"; c.error = ""; } }); subirTodo(); };
+$("#camara").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; if (f.length) agregar(f, true); };
+$("#galeria").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; if (f.length) agregar(f, false); };
+window.addEventListener("online", () => { cola.forEach((c) => { if (c.estado === "fallo" && c.blob) c.estado = "espera"; }); subirTodo(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarRecibidas(); });
+
+async function retomarPendientes() {
+  const guardadas = (await bdHacer("readonly", (s) => s.getAll())) || [];
+  for (const g of guardadas) {
+    cola.push({ ...g, estado: "espera", url: g.tipo.startsWith("image/") ? URL.createObjectURL(g.blob) : null });
+  }
+}
+
+// ---------- instalar como app ----------
+let pedidoInstalar = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault(); pedidoInstalar = e;
+  $("#v-instalar").classList.remove("oculto"); $("#b-instalar").classList.remove("oculto");
+  $("#instalar-texto").textContent = "Instálela para abrirla desde la pantalla de inicio, como cualquier app.";
+});
+$("#b-instalar").onclick = async () => { if (!pedidoInstalar) return; pedidoInstalar.prompt(); await pedidoInstalar.userChoice; pedidoInstalar = null; $("#v-instalar").classList.add("oculto"); };
+function consejoInstalar() {
+  const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (instalada) return;
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    $("#instalar-texto").textContent = "En Safari toque el botón Compartir (el cuadro con la flecha) y luego «Agregar a pantalla de inicio».";
+    $("#v-instalar").classList.remove("oculto");
+  }
+}
+
+async function empezar() {
+  $("#salir").classList.remove("oculto");
+  ver(["v-fotos", "v-cola"]);
+  $("#pie-tel").textContent = "Este teléfono: " + (tel.nombre || "");
+  await cargarClientes();
+  pintar();
+  consejoInstalar();
+  subirTodo();
+}
+
+(async () => {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  await abrirBd();
+  await retomarPendientes();
+  const enlace = new URLSearchParams(location.hash.slice(1)).get("i");   // código que trae el QR de la PC
+  if (tel) await empezar();
+  else {
+    ver(["v-entrar"]);
+    if (enlace) { $("#codigo").value = enlace.toUpperCase(); $("#nombre-tel").focus(); }
+  }
+})();
+</script>
+</body>
+</html>
