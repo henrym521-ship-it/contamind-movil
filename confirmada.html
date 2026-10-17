@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>ContaMind · Correo confirmado</title>
+<meta name="description" content="Confirmación de la cuenta ContaMind en la nube.">
+<meta name="theme-color" content="#14213D">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<script>
+  // Lo primero: borrar de la barra de direcciones lo que manda la nube (#access_token=…).
+  // Esta página no guarda ni usa esa sesión: la cuenta se usa en ContaMind PRO, en la computadora.
+  (function () {
+    var crudo = (location.hash || "").replace(/^#/, "") + "&" + (location.search || "").replace(/^\?/, "");
+    var p = new URLSearchParams(crudo);
+    window.__resultado = { error: p.get("error_code") || p.get("error") || "", tipo: p.get("type") || "" };
+    try { history.replaceState(null, "", location.pathname); } catch (e) { /* sin problema */ }
+  })();
+</script>
+<style>
+  :root {
+    --papel: #F6F7F9; --superficie: #FFFFFF; --linea: #D8DEE6; --tinta: #14213D; --tinta-2: #44516A;
+    --sello: #0F766E; --sello-suave: #E2F2EF; --ambar: #B45309; --ambar-suave: #FEF4E6;
+    --letra: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --papel: #0E1626; --superficie: #16223A; --linea: #2A3A5C; --tinta: #E8EDF5; --tinta-2: #BAC6D9;
+            --sello: #2BB3A6; --sello-suave: #123A3A; --ambar: #F5A524; --ambar-suave: #3A2A10; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.55 var(--letra); }
+  body { min-height: 100vh; padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+  main { max-width: 520px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px 0 18px; }
+  header img { width: 36px; height: 36px; border-radius: 9px; }
+  header span { font-size: 20px; font-weight: 700; }
+  .tarjeta { background: var(--superficie); border: 1px solid var(--linea); border-radius: 14px; padding: 22px 18px; }
+  .sello { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 14px;
+           background: var(--sello-suave); color: var(--sello); }
+  .aviso .sello { background: var(--ambar-suave); color: var(--ambar); }
+  .sello svg { width: 34px; height: 34px; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; color: var(--tinta-2); }
+  ol { margin: 6px 0 14px; padding-left: 22px; color: var(--tinta-2); }
+  li { margin-bottom: 6px; }
+  b { color: var(--tinta); }
+  .nota { font-size: 15px; margin: 16px 0 0; }
+  .oculto { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="icono-192.png" alt=""><span>ContaMind</span></header>
+
+  <section class="tarjeta" id="bien" aria-live="polite">
+    <div class="sello" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <h1>¡Listo! Su correo quedó confirmado</h1>
+    <p>Su cuenta ContaMind en la nube ya está activa. Ahora termine en la computadora:</p>
+    <ol>
+      <li>Abra <b>ContaMind PRO</b>.</li>
+      <li>Vaya a <b>Copias de seguridad</b>.</li>
+      <li>En «Cuenta ContaMind en la nube», pulse <b>Entrar</b> y escriba el mismo correo y clave.</li>
+    </ol>
+    <p class="nota">Ya puede cerrar esta página.</p>
+  </section>
+
+  <section class="tarjeta aviso oculto" id="vencido" aria-live="polite">
+    <div class="sello" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.5"/></svg>
+    </div>
+    <h1>Este enlace ya no sirve</h1>
+    <p>Puede que ya lo haya usado antes (entonces su cuenta <b>ya está confirmada</b>) o que haya pasado mucho tiempo.</p>
+    <ol>
+      <li>Abra <b>ContaMind PRO</b> → <b>Copias de seguridad</b>.</li>
+      <li>Pulse <b>Entrar</b> con su correo y clave.</li>
+      <li>Si le dice que falta confirmar el correo, pulse <b>Crear mi cuenta en la nube</b> otra vez con el mismo correo: le llegará un enlace nuevo.</li>
+    </ol>
+    <p class="nota">Ya puede cerrar esta página.</p>
+  </section>
+</main>
+<script>
+  if (window.__resultado && window.__resultado.error) {
+    document.getElementById("bien").classList.add("oculto");
+    document.getElementById("vencido").classList.remove("oculto");
+  }
+</script>
+</body>
+</html>
