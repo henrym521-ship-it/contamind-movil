@@ -35,7 +35,7 @@
   h2 { font-size: 18px; margin: 0 0 6px; }
   p { margin: 0 0 10px; color: var(--tinta-2); }
   label { display: block; font-weight: 600; margin: 12px 0 6px; }
-  input[type=email], input[type=password], select {
+  input[type=email], input[type=password], input[type=text], select {
     width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; color: var(--tinta); background: var(--superficie);
     border: 1px solid var(--linea); border-radius: 10px; }
   input:focus-visible, select:focus-visible, button:focus-visible, .boton:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
@@ -69,8 +69,16 @@
   @keyframes g { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .girando { animation: none; } button { transition: none; } }
   .recibida { color: var(--sello-hondo); }
-  .codigo { font: 700 24px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
+  input.codigo, .codigo { font: 700 24px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
   .pie-tel { font-size: 14px; color: var(--tenue); text-align: center; margin-top: 4px; }
+  input.pin { font: 700 26px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 10px; text-align: center; }
+  .dato { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border-radius: 10px;
+    background: var(--sello-suave); margin: 10px 0; }
+  .dato b { font: 700 24px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 3px; color: var(--tinta); }
+  ol.pasos { margin: 6px 0 4px; padding-left: 22px; color: var(--tinta-2); }
+  ol.pasos li { margin-bottom: 8px; }
+  .icono-linea { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; }
+  .cambiar { text-align: center; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -78,19 +86,63 @@
 <main>
   <section class="tarjeta" id="v-cargando" aria-live="polite"><p>Cargando…</p></section>
 
+  <!-- v2.20: volver a entrar con el código del teléfono + PIN (sin invitación nueva) -->
+  <section class="tarjeta oculto" id="v-volver">
+    <h2>Entrar</h2>
+    <p>Escriba el <b>código de este teléfono</b> (6 letras y números) y su <b>PIN</b>. El código lo ve en ContaMind (computadora) → <b>Teléfonos</b>.</p>
+    <form id="f-volver" novalidate>
+      <label for="v-codigo">Código del teléfono</label>
+      <input type="text" class="codigo" id="v-codigo" maxlength="7" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="ABC234">
+      <label for="v-pin">PIN (6 números)</label>
+      <input type="password" class="pin" id="v-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="••••••">
+      <div id="e-volver" class="aviso error oculto" role="alert"></div>
+      <button class="primario" type="submit" id="b-volver" style="margin-top:16px">Entrar</button>
+    </form>
+    <p class="cambiar"><button class="enlace" type="button" id="ir-invitacion" style="margin:0 auto">¿Primera vez? Tengo un código de invitación</button></p>
+  </section>
+
   <!-- Autorizar este teléfono con la invitación de la computadora -->
   <section class="tarjeta oculto" id="v-entrar">
     <h2>Autorice este teléfono</h2>
-    <p>En ContaMind (computadora): <b>Desde el teléfono → Invitar un teléfono</b>. Escanee el código QR con la cámara o escriba aquí el código de 8 letras.</p>
+    <p>En ContaMind (computadora): <b>Teléfonos → Invitar un teléfono</b>. Escanee el código QR con la cámara o escriba aquí el código de 8 letras.</p>
     <form id="f-entrar" novalidate>
       <label for="codigo">Código de invitación</label>
-      <input class="codigo" id="codigo" maxlength="9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345">
+      <input type="text" class="codigo" id="codigo" maxlength="9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345">
       <label for="nombre-tel">Nombre de este teléfono</label>
-      <input id="nombre-tel" maxlength="60" placeholder="Ej.: Teléfono de Ana" autocomplete="off">
+      <input type="text" id="nombre-tel" maxlength="60" placeholder="Ej.: Teléfono de Ana" autocomplete="off">
+      <label for="pin1">Invente un PIN de 6 números</label>
+      <input type="password" class="pin" id="pin1" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••">
+      <label for="pin2">Repita el PIN</label>
+      <input type="password" class="pin" id="pin2" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••">
+      <p class="contador" style="text-align:left;margin-top:6px">Con el PIN podrá volver a entrar si el teléfono se olvida, sin pedir otra invitación. No use 123456 ni 111111.</p>
       <div id="e-entrar" class="aviso error oculto" role="alert"></div>
       <button class="primario" type="submit" id="b-entrar" style="margin-top:16px">Autorizar</button>
     </form>
+    <p class="cambiar"><button class="enlace" type="button" id="ir-volver" style="margin:0 auto">Ya autoricé este teléfono: entrar con código y PIN</button></p>
     <p class="contador" style="margin-top:12px">Este teléfono solo podrá <b>subir fotos de facturas</b>. No ve facturas, montos ni reportes.</p>
+  </section>
+
+  <!-- Después de autorizar: anotar el código -->
+  <section class="tarjeta oculto" id="v-listo" aria-live="polite">
+    <h2>¡Teléfono autorizado!</h2>
+    <p>Anote el código de este teléfono. Con él y su PIN puede volver a entrar cuando quiera:</p>
+    <div class="dato"><span>Código del teléfono</span><b id="listo-codigo"></b></div>
+    <p class="contador" style="text-align:left">También lo ve en ContaMind (computadora) → <b>Teléfonos</b>. El PIN no se lo diga a nadie.</p>
+    <button class="primario" type="button" id="b-listo" style="margin-top:8px">Ya lo anoté, tomar fotos</button>
+  </section>
+
+  <!-- Teléfonos autorizados antes del PIN: crear uno -->
+  <section class="tarjeta oculto" id="v-ponerpin">
+    <h2>Cree su PIN</h2>
+    <p>Así podrá volver a entrar sin pedir otra invitación (por ejemplo, si abre la app desde el ícono o cambia de navegador).</p>
+    <form id="f-pin" novalidate>
+      <label for="np1">PIN nuevo (6 números)</label>
+      <input type="password" class="pin" id="np1" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••">
+      <label for="np2">Repita el PIN</label>
+      <input type="password" class="pin" id="np2" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••">
+      <div id="e-pin" class="aviso error oculto" role="alert"></div>
+      <button class="primario" type="submit" id="b-pin" style="margin-top:16px">Guardar PIN</button>
+    </form>
   </section>
 
   <!-- Tomar fotos -->
@@ -134,8 +186,21 @@
 
   <section class="tarjeta oculto" id="v-instalar">
     <h2>Téngala como una app</h2>
-    <p id="instalar-texto">En el menú del navegador toque «Agregar a pantalla de inicio».</p>
-    <button class="chico oculto" id="b-instalar" type="button">Instalar</button>
+    <p>Así queda un ícono de ContaMind en el teléfono y no necesita el enlace otra vez.</p>
+    <button class="primario oculto" id="b-instalar" type="button">Instalar ContaMind</button>
+    <ol class="pasos oculto" id="pasos-iphone">
+      <li>Abajo en Safari, toque <b>Compartir</b>
+        <svg class="icono-linea" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="(el cuadro con la flecha hacia arriba)"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>.</li>
+      <li>Baje y toque <b>«Agregar a pantalla de inicio»</b> <span aria-hidden="true">⊕</span>.</li>
+      <li>Toque <b>Agregar</b>. Desde ahora abra ContaMind con ese ícono.</li>
+      <li>La primera vez que abra el ícono, entre con el <b>código del teléfono</b> y su <b>PIN</b>.</li>
+    </ol>
+    <ol class="pasos oculto" id="pasos-android">
+      <li>Toque el menú <b>⋮</b> (arriba a la derecha de Chrome).</li>
+      <li>Toque <b>«Instalar aplicación»</b> o <b>«Agregar a la pantalla principal»</b>.</li>
+      <li>Desde ahora abra ContaMind con ese ícono.</li>
+    </ol>
+    <button class="enlace" type="button" id="b-luego" style="margin:6px auto 0">Ahora no</button>
   </section>
 </main>
 
@@ -152,12 +217,14 @@ const NITIDEZ_MINIMA = 45;         // varianza del laplaciano en la miniatura: m
 const LUZ_MINIMA = 70;             // brillo promedio 0–255: menos = oscura
 
 const $ = (s) => document.querySelector(s);
-const VISTAS = ["v-cargando", "v-entrar", "v-fotos", "v-cola", "v-mala"];
+const VISTAS = ["v-cargando", "v-entrar", "v-volver", "v-listo", "v-fotos", "v-cola", "v-mala"];
 const ver = (ids) => VISTAS.forEach((v) => $("#" + v).classList.toggle("oculto", !ids.includes(v)));
 const guardar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
 const leer = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const limpio = (t) => String(t ?? "").replace(/[<>&"]/g, "");
-let tel = leer("cm_telefono");     // {token, nombre}
+let tel = leer("cm_telefono");     // {token, nombre, codigo}
+const pinBueno = (p) => /^[0-9]{6}$/.test(p) && !/^(\d)\1{5}$/.test(p) && !"0123456789".includes(p) && !"9876543210".includes(p);
+const mostrarError = (sel, texto) => { const e = $(sel); e.textContent = texto; e.classList.toggle("oculto", !texto); };
 
 async function llamar(cuerpo) {
   let r;
@@ -166,12 +233,41 @@ async function llamar(cuerpo) {
                                body: JSON.stringify(cuerpo) });
   } catch { throw new Error("Sin conexión. Revise el internet o los datos del teléfono."); }
   let js = null; try { js = await r.json(); } catch { /* sin cuerpo */ }
-  if (r.status === 401 && cuerpo.accion !== "canjear") { desconectar(); throw new Error((js && js.error) || "Este teléfono ya no está autorizado."); }
+  if (r.status === 401 && tel && cuerpo.token) { desconectar(); throw new Error((js && js.error) || "Este teléfono ya no está autorizado."); }
   if (!r.ok) throw new Error((js && js.error) || ("La nube respondió con un error (" + r.status + ")."));
   return js;
 }
 
-function desconectar() { tel = null; guardar("cm_telefono", null); $("#salir").classList.add("oculto"); ver(["v-entrar"]); }
+function desconectar() {
+  if (tel && tel.codigo) guardar("cm_codigo", tel.codigo);        // para no tener que escribirlo otra vez
+  tel = null; guardar("cm_telefono", null); $("#salir").classList.add("oculto");
+  $("#v-ponerpin").classList.add("oculto");
+  irVolver();
+}
+function irVolver() { $("#v-codigo").value = leer("cm_codigo") || ""; ver(["v-volver"]); consejoInstalar(); }
+function irInvitacion() { ver(["v-entrar"]); consejoInstalar(); }
+$("#ir-invitacion").onclick = irInvitacion;
+$("#ir-volver").onclick = irVolver;
+
+// ---------- v2.20: volver a entrar con código del teléfono + PIN ----------
+$("#f-volver").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const codigo = $("#v-codigo").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const pin = $("#v-pin").value.trim();
+  const b = $("#b-volver");
+  mostrarError("#e-volver", "");
+  if (codigo.length !== 6) return mostrarError("#e-volver", "El código del teléfono tiene 6 letras y números. Lo ve en ContaMind (computadora) → Teléfonos.");
+  if (!/^[0-9]{6}$/.test(pin)) return mostrarError("#e-volver", "El PIN tiene 6 números.");
+  b.disabled = true; b.innerHTML = '<span class="girando" aria-hidden="true"></span> Entrando…';
+  try {
+    const js = await llamar({ accion: "entrar", codigo, pin });
+    tel = { token: js.token, nombre: js.nombre, codigo: js.codigo };
+    guardar("cm_telefono", tel); guardar("cm_codigo", js.codigo);
+    $("#v-pin").value = "";
+    await empezar();
+  } catch (x) { mostrarError("#e-volver", x.message); $("#v-pin").value = ""; }
+  finally { b.disabled = false; b.textContent = "Entrar"; }
+});
 
 // ---------- autorizar con la invitación ----------
 $("#f-entrar").addEventListener("submit", async (e) => {
@@ -180,25 +276,58 @@ $("#f-entrar").addEventListener("submit", async (e) => {
   const nombre = $("#nombre-tel").value.trim();
   const err = $("#e-entrar"), b = $("#b-entrar");
   err.classList.add("oculto");
+  const pin = $("#pin1").value.trim();
   if (codigo.length !== 8) { err.textContent = "El código tiene 8 letras y números."; err.classList.remove("oculto"); return; }
   if (!nombre) { err.textContent = "Escriba un nombre para este teléfono (así se verá en la computadora)."; err.classList.remove("oculto"); return; }
+  if (!/^[0-9]{6}$/.test(pin)) { err.textContent = "El PIN debe tener 6 números."; err.classList.remove("oculto"); return; }
+  if (!pinBueno(pin)) { err.textContent = "Ese PIN es muy fácil de adivinar (por ejemplo 111111 o 123456). Elija otro."; err.classList.remove("oculto"); return; }
+  if (pin !== $("#pin2").value.trim()) { err.textContent = "Los dos PIN no son iguales. Escríbalos otra vez."; err.classList.remove("oculto"); return; }
   b.disabled = true; b.innerHTML = '<span class="girando" aria-hidden="true"></span> Autorizando…';
   try {
-    const js = await llamar({ accion: "canjear", codigo, nombre });
-    tel = { token: js.token, nombre: js.nombre };
-    guardar("cm_telefono", tel);
+    const js = await llamar({ accion: "canjear", codigo, nombre, pin });
+    tel = { token: js.token, nombre: js.nombre, codigo: js.codigo };
+    guardar("cm_telefono", tel); guardar("cm_codigo", js.codigo);
+    $("#pin1").value = ""; $("#pin2").value = "";
     history.replaceState(null, "", location.pathname);
-    await empezar();
+    $("#listo-codigo").textContent = js.codigo || "";
+    ver(["v-listo"]);
+    $("#b-listo").focus();
   } catch (x) { err.textContent = x.message; err.classList.remove("oculto"); }
   finally { b.disabled = false; b.textContent = "Autorizar"; }
 });
-$("#salir").onclick = () => { if (confirm("¿Desconectar este teléfono? Para volver a usarlo necesitará otra invitación.")) desconectar(); };
+$("#b-listo").onclick = () => empezar();
+$("#salir").onclick = () => { if (confirm("¿Desconectar este teléfono? Para volver a entrar necesitará el código del teléfono y su PIN.")) desconectar(); };
+
+// ---------- teléfonos autorizados antes del PIN ----------
+$("#f-pin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pin = $("#np1").value.trim(), b = $("#b-pin");
+  mostrarError("#e-pin", "");
+  if (!/^[0-9]{6}$/.test(pin)) return mostrarError("#e-pin", "El PIN debe tener 6 números.");
+  if (!pinBueno(pin)) return mostrarError("#e-pin", "Ese PIN es muy fácil de adivinar (por ejemplo 111111 o 123456). Elija otro.");
+  if (pin !== $("#np2").value.trim()) return mostrarError("#e-pin", "Los dos PIN no son iguales. Escríbalos otra vez.");
+  b.disabled = true; b.innerHTML = '<span class="girando" aria-hidden="true"></span> Guardando…';
+  try {
+    const js = await llamar({ accion: "poner_pin", token: tel.token, pin });
+    tel.codigo = js.codigo || tel.codigo; guardar("cm_telefono", tel); guardar("cm_codigo", tel.codigo);
+    $("#np1").value = ""; $("#np2").value = "";
+    $("#v-ponerpin").classList.add("oculto");
+    $("#listo-codigo").textContent = tel.codigo || "";
+    ver(["v-listo"]);
+  } catch (x) { mostrarError("#e-pin", x.message); }
+  finally { b.disabled = false; b.textContent = "Guardar PIN"; }
+});
 
 // ---------- clientes ----------
 async function cargarClientes() {
   const sel = $("#cliente");
   let lista = leer("cm_clientes") || [];
-  try { const js = await llamar({ accion: "clientes", token: tel.token }); lista = js.clientes || []; guardar("cm_clientes", lista); }
+  try {
+    const js = await llamar({ accion: "clientes", token: tel.token }); lista = js.clientes || []; guardar("cm_clientes", lista);
+    if (js.codigo && js.codigo !== tel.codigo) { tel.codigo = js.codigo; guardar("cm_telefono", tel); guardar("cm_codigo", js.codigo); }
+    $("#v-ponerpin").classList.toggle("oculto", js.con_pin !== false);
+    pintarPie();
+  }
   catch { /* sin internet: la última lista conocida */ }
   const ultimo = leer("cm_cliente");
   sel.innerHTML = lista.map((c) => `<option value="${limpio(c.id)}">${limpio(c.nombre)}</option>`).join("")
@@ -383,25 +512,35 @@ async function retomarPendientes() {
 
 // ---------- instalar como app ----------
 let pedidoInstalar = null;
+const esIphone = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const esAndroid = /android/i.test(navigator.userAgent);
+const instalada = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault(); pedidoInstalar = e;
-  $("#v-instalar").classList.remove("oculto"); $("#b-instalar").classList.remove("oculto");
-  $("#instalar-texto").textContent = "Instálela para abrirla desde la pantalla de inicio, como cualquier app.";
+  $("#b-instalar").classList.remove("oculto"); $("#pasos-android").classList.add("oculto");
+  consejoInstalar();
 });
-$("#b-instalar").onclick = async () => { if (!pedidoInstalar) return; pedidoInstalar.prompt(); await pedidoInstalar.userChoice; pedidoInstalar = null; $("#v-instalar").classList.add("oculto"); };
+window.addEventListener("appinstalled", () => { $("#v-instalar").classList.add("oculto"); guardar("cm_instalar_luego", null); });
+$("#b-instalar").onclick = async () => {
+  if (!pedidoInstalar) return;
+  pedidoInstalar.prompt(); const r = await pedidoInstalar.userChoice; pedidoInstalar = null;
+  if (r && r.outcome === "accepted") $("#v-instalar").classList.add("oculto");
+};
+$("#b-luego").onclick = () => { guardar("cm_instalar_luego", Date.now()); $("#v-instalar").classList.add("oculto"); };
 function consejoInstalar() {
-  const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  if (instalada) return;
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    $("#instalar-texto").textContent = "En Safari toque el botón Compartir (el cuadro con la flecha) y luego «Agregar a pantalla de inicio».";
-    $("#v-instalar").classList.remove("oculto");
-  }
+  const luego = leer("cm_instalar_luego");
+  if (instalada() || (luego && Date.now() - luego < 7 * 86400000)) { $("#v-instalar").classList.add("oculto"); return; }
+  if (esIphone) $("#pasos-iphone").classList.remove("oculto");
+  else if (esAndroid && !pedidoInstalar) $("#pasos-android").classList.remove("oculto");
+  else if (!pedidoInstalar) return;                                  // computadora u otro: no molestar
+  $("#v-instalar").classList.remove("oculto");
 }
+function pintarPie() { $("#pie-tel").textContent = "Este teléfono: " + (tel.nombre || "") + (tel.codigo ? " · Código: " + tel.codigo : ""); }
 
 async function empezar() {
   $("#salir").classList.remove("oculto");
   ver(["v-fotos", "v-cola"]);
-  $("#pie-tel").textContent = "Este teléfono: " + (tel.nombre || "");
+  pintarPie();
   await cargarClientes();
   pintar();
   consejoInstalar();
@@ -414,10 +553,9 @@ async function empezar() {
   await retomarPendientes();
   const enlace = new URLSearchParams(location.hash.slice(1)).get("i");   // código que trae el QR de la PC
   if (tel) await empezar();
-  else {
-    ver(["v-entrar"]);
-    if (enlace) { $("#codigo").value = enlace.toUpperCase(); $("#nombre-tel").focus(); }
-  }
+  else if (enlace) { irInvitacion(); $("#codigo").value = enlace.toUpperCase(); $("#nombre-tel").focus(); }
+  else if (leer("cm_codigo") || instalada()) irVolver();           // ya se usó aquí, o se abrió desde el ícono
+  else irInvitacion();
 })();
 </script>
 </body>

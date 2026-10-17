@@ -1,6 +1,6 @@
 // ContaMind (teléfono): guarda la página para que abra aunque la señal esté mala.
 // Las fotos NO pasan por aquí: van directo a la nube (o esperan en el teléfono hasta que haya señal).
-const VERSION = "contamind-movil-v2";
+const VERSION = "contamind-movil-v3";
 const ARCHIVOS = ["./", "index.html", "manifest.webmanifest", "icono-192.png", "icono-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
