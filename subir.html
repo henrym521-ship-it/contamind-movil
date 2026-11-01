@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Subir facturas · ContaMind</title>
-<meta name="description" content="Suba las facturas de su empresa para su contador.">
+<title>Envíe sus facturas a su contador · ContaMind</title>
+<meta name="description" content="Página privada para enviarle a su contador las fotos o PDF de sus facturas.">
+<meta name="cm-pagina" content="cm-pagina-subir">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ContaMind">
+<meta property="og:title" content="Envíe sus facturas a su contador">
+<meta property="og:description" content="Toque el enlace y suba fotos o PDF de sus facturas. Privado: solo le llegan a su contador.">
+<meta property="og:image" content="https://hcsolucionesrd.com/f/vista.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#14213D">
@@ -100,7 +109,9 @@ const LADO_MAXIMO = 2400;
 const CALIDAD = 0.85;
 const MAX_BYTES = 15 * 1024 * 1024;
 const $ = (s) => document.querySelector(s);
-const k = new URLSearchParams(location.hash.slice(1)).get("k") || "";
+// v2.25: el código viene como «#K7Q2-9MXA-4TZP» (corto) o «#k=…» (el largo de la 2.24)
+const _h = decodeURIComponent(location.hash.slice(1));
+const k = (new URLSearchParams(_h).get("k") || (/^[0-9A-Za-z-]{12,16}$/.test(_h) ? _h : "")).trim();
 let enviados = 0;
 
 function ver(id) { ["v-cargando", "v-mala", "v-subir"].forEach((v) => $("#" + v).classList.toggle("oculto", v !== id)); }
@@ -181,7 +192,7 @@ function conectar() {
 }
 
 (async function inicio() {
-  if (k.length < 30) return mala("Este enlace está incompleto. Ábralo otra vez desde el mensaje de su contador.");
+  if (k.replace(/-/g, "").length < 12) return mala("Este enlace está incompleto. Ábralo otra vez desde el mensaje de su contador.");
   try {
     const js = await llamar({ accion: "enlace_info" });
     $("#empresa").textContent = js.nombre || "Su empresa";
